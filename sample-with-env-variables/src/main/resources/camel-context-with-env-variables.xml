@@ -48,17 +48,73 @@
         </property>
     </bean>
 
-    <camelContext id="wmq-to-amq-bridge" xmlns="http://camel.apache.org/schema/spring">
-        <route id="amazonMQ-to-websphereMQ">
-            <description>Camel Route from amazonMQ to websphereMQ</description>
-            <from uri="amazonMQ:queue:DEV.QUEUE.1?concurrentConsumers=5"/>
-            <inOnly uri="websphereMQ:queue:DEV.QUEUE.1?preserveMessageQos=true"/>
-        </route>
+<!--
+    <bean id="throttlePolicy" class="org.apache.camel.throttling.ThrottlingInflightRoutePolicy">
+        <property name="maxInflightExchanges" value="1"/>
+    </bean>
+-->
 
-        <route id="websphereMQ-to-amazonMQ">
+    <camelContext id="wmq-to-amq-bridge" xmlns="http://camel.apache.org/schema/spring">
+        <route id="security-request-websphereMQ-to-amazonMQ">
             <description>Camel Route from websphereMQ to amazonMQ</description>
-            <from uri="websphereMQ:queue:DEV.QUEUE.2?concurrentConsumers=5"/>
-            <inOnly uri="amazonMQ:queue:DEV.QUEUE.2?preserveMessageQos=true"/>
+            <from uri="websphereMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <inOnly uri="amazonMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
         </route>
+        <route id="security-request-amazonMQ-to-websphereMQ">
+            <description>Camel Route from amazonMQ to websphereMQ</description>
+            <from uri="amazonMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <to pattern="InOnly" uri="websphereMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
+        </route>
+<!--
+        <route id="security-request-websphereMQ-to-amazonMQ" routePolicyRef="throttlePolicy">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="websphereMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <inOnly uri="amazonMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
+        </route>
+        <route id="security-request-amazonMQ-to-websphereMQ">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="amazonMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <inOnly uri="websphereMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
+        </route>
+-->
+<!--
+        <route id="security-request-websphereMQ-to-amazonMQ" routePolicyRef="throttlePolicy">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="websphereMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <step id="send">
+                <to pattern="InOnly" uri="amazonMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
+            </step>
+            <step id="pause">
+                <delay asyncDelayed="false">
+                    <constant>3000</constant>
+                </delay>
+                <to uri="mock:result" />
+            </step>
+        </route>
+        <route id="security-request-amazonMQ-to-websphereMQ">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="amazonMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;disableReplyTo=true"/>
+            <inOnly uri="websphereMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true"/>
+        </route>
+-->
+<!--
+        <route id="security-request-amazonMQ-to-websphereMQ">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="websphereMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;useMessageIDAsCorrelationID=true"/>
+            <inOut uri="amazonMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true&amp;replyToSameDestinationAllowed=true&amp;useMessageIDAsCorrelationID=true"/>
+        </route>
+-->
+<!--  InOut Experiment
+        <route id="security-request-amazonMQ-to-websphereMQ">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="amazonMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;useMessageIDAsCorrelationID=true"/>
+            <inOut uri="websphereMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true&amp;replyToSameDestinationAllowed=true&amp;useMessageIDAsCorrelationID=true"/>
+        </route>
+        <route id="security-request-websphereMQ-to-amazonMQ">
+            <description>Camel Route from websphereMQ to amazonMQ</description>
+            <from uri="websphereMQ:queue:CERN.SSREQ.SECURITY?concurrentConsumers=1&amp;useMessageIDAsCorrelationID=true"/>
+            <inOut uri="amazonMQ:queue:CERN.SSREQ.SECURITY?preserveMessageQos=true&amp;replyToSameDestinationAllowed=true&amp;useMessageIDAsCorrelationID=true"/>
+        </route>
+-->
     </camelContext>
 </beans>
